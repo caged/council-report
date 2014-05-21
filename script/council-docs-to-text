@@ -1,0 +1,9 @@
+#!/bin/sh
+
+mkdir -p ./text
+
+for file in ./raw/*.pdf; do
+  fname=$(basename $file)
+  name=${fname%.*}
+  pdftotext $file "./text/${name}.txt"
+done

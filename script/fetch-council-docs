@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+
+require 'nokogiri'
+require 'open-uri'
+
+doc = Nokogiri::HTML(open('http://www.portlandonline.com/auditor/index.cfm?c=50265').read)
+doc.css('.contentHeader a').each do |link|
+  label = link.text.strip
+  next if label !~ /item\s([0-9]+)$/i
+
+  id = link.attr('href').split('a=').last
+  process = fork { exec "curl --progress --create-dirs --output ./raw/#{$1}.pdf 'http://www.portlandonline.com/auditor/index.cfm?c=50265&a=#{id}'" }
+  Process.waitpid(process)
+end

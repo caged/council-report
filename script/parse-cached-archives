@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+# encoding: utf-8
+
+require 'pathname'
+require 'nokogiri'
+
+summaries = []
+Pathname.glob('./archives/*.xml').each do |file|
+  xml = Nokogiri::XML(File.read(file))
+  xml.xpath('//item/description').each do |item|
+    summaries << { :file => File.basename(file), :title => item.content.strip }
+  end
+end
+
+summaries.sort_by {|s| s[:title] }.each do |s|
+  puts "#{s[:file]} - #{s[:title][0..150]}"  if s[:title].include?('$')
+end

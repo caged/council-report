@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+
+require 'pathname'
+
+data = []
+
+Pathname.glob('./text/*.txt').each do |file|
+  text = File.read(file)
+  context = /^5\)(.+?)\)\n(.+?)^6\)/m.match(text)
+  puts "\n\n#{file.basename}==============================="
+  puts context
+end

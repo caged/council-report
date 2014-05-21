@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+
+require 'nokogiri'
+require 'open-uri'
+require 'rack'
+require 'date'
+
+DOC_INDEX_URL="http://www.portlandonline.com/index.cfm?&a=481868&c=49508"
+
+doc = Nokogiri::HTML(open(DOC_INDEX_URL).read)
+doc.css('.pagecolumnright div .widget a[href^="/index.cfm"]').each do |link|
+  label = link.text()
+
+  query = link.attr('href').split('?&').last
+  query = Rack::Utils.parse_query(query)
+  id    = query['a']
+
+  /([0-9]+\-[0-9]+\-[0-9]+)/i.match(label)
+  date = Date.strptime($1, "%m-%d-%y") rescue nil
+
+  xml_url = "http://www.portlandonline.com/shared/js/TinyMCE/jscripts/tiny_mce/plugins/video/getPlaylist.cfm?content_id=#{id}"
+  puts "Downloading #{xml_url}"
+  xml_data = open(xml_url).read
+
+  if xml_data !~ /^error/i
+    file_name = date ? "archives/#{date}-#{id}.xml" : "archives/#{id}.xml"
+    File.write(file_name, xml_data)
+  end
+end
