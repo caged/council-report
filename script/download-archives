@@ -2,7 +2,6 @@
 
 require 'nokogiri'
 require 'open-uri'
-require 'rack'
 require 'date'
 
 DOC_INDEX_URL="http://www.portlandonline.com/index.cfm?&a=481868&c=49508"
