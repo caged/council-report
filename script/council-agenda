@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+require 'bundler/setup'
+require 'nokogiri'
+require 'open-uri'
+require 'json'
+
+doc = Nokogiri::HTML(open('http://www.portlandonline.com/auditor/index.cfm?c=26997').read)
+bills = []
+doc.css('td p').each do |row|
+  row.css('strong a').each do |ar|
+    ar.remove
+    bill = { "link" => ar['href'], "number" => ar.text, "title" => row.text.gsub(/^[[:space:]]+/,'')}
+    bills << bill
+  end
+end
+
+puts bills.to_json
+
