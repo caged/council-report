@@ -1,0 +1,51 @@
+#!/usr/bin/env ruby
+# encoding: UTF-8
+
+require 'nokogiri'
+require 'open-uri'
+require 'json'
+require 'aws-sdk'
+
+# The city council agenda items contain some crazy invisible utf-8 bytes so we
+# need to reencode in ascii and clean up the garbage
+encoding_options = {
+  :invalid           => :replace,  # Replace invalid byte sequences
+  :undef             => :replace,  # Replace anything not defined in ASCII
+  :replace           => '',        # Use a blank for those replacements
+  :universal_newline => true       # Always break lines with \n
+}
+
+s3 = AWS::S3.new
+
+url = 'http://www.portlandonline.com/Auditor/Index.cfm?c=26997'
+base_url = 'http://www.portlandonline.com'
+
+doc = Nokogiri::HTML(open(url).read)
+target_column = doc.css('.pagecolumnmiddle  .wysiwyg')
+title = target_column.css('p[style="text-align: center;"] strong').text
+
+items = []
+
+# Because the HTML is so poorly structured on this page, we need to find all the
+# proper links to agenda items, and traverse upwards to get the description container
+target_column.css('.wysiwyg table tr a').each_with_index do |link, index|
+  container = link.parent.parent
+
+  href = "#{base_url}/#{link.attr('href')}"
+  number = link.text.strip
+  # The emergency status of the agenda item.  Emergency items take effect immediately
+  # and aren't required to go through the normal 30 day waiting period.
+  emergency = !!(number =~ /\*/)
+  # The description of the agenda item
+  description = container.text.sub(number, '').gsub("\r\n", '').encode('ascii', encoding_options).strip
+
+  items << {
+    :url => href,
+    :number => number,
+    :emergency => emergency,
+    :description => description
+  }
+end
+
+bucket = s3.buckets['portland-city-council-agenda']
+object = bucket.objects['latest.json'].write(items.to_json, :acl => :public_read)
