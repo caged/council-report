@@ -47,5 +47,5 @@ target_column.css('.wysiwyg table tr a').each_with_index do |link, index|
   }
 end
 
-bucket = s3.buckets['portland-city-council-agenda']
+bucket = s3.buckets[ENV['AWS_S3_BUCKET']]
 object = bucket.objects['latest.json'].write(items.to_json, :acl => :public_read)
