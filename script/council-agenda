@@ -3,16 +3,44 @@ require 'bundler/setup'
 require 'nokogiri'
 require 'open-uri'
 require 'json'
+require 'time'
 
-doc = Nokogiri::HTML(open('http://www.portlandonline.com/auditor/index.cfm?c=26997').read)
-bills = []
-doc.css('td p').each do |row|
-  row.css('strong a').each do |ar|
-    ar.remove
-    bill = { "link" => ar['href'], "number" => ar.text, "title" => row.text.gsub(/^[[:space:]]+/,'')}
-    bills << bill
+def parse_bill(agenda_row, agenda_date)
+  link = agenda_row.css('a')[0]
+  link.remove
+  bill = { "link" => link['href'], 
+           "number" => link.text.match(/\d+/)[0], 
+           "date" => agenda_date, 
+           "title" => agenda_row.text.gsub(/^[[:space:]]+/,'')}
+end
+
+url = 'http://www.portlandonline.com/auditor/index.cfm?c=26997'
+doc = Nokogiri::HTML(open(url).read)
+
+items = []
+agenda_date = nil
+doc.css('div.wysiwyg font table tbody td').each do |row|
+  td_paras = row.css('p')
+  if td_paras[1]
+    date_match = row.css('p')[1].text.match(/\d+:\d+ \w\w, \w+ \d+, 20\d\d/)
+    if date_match
+      agenda_date = Time.parse(date_match[0])
+    end
+  end
+
+  if agenda_date
+    row.css('p').each do |ar|
+      if ar.css('a')[0]
+        bill = parse_bill(ar, agenda_date)
+        items << bill
+      end
+    end
   end
 end
 
-puts bills.to_json
+agenda = {"source" => url,
+          "scrape_date" => Time.now,
+          "items" => items}
+
+puts JSON.pretty_generate(agenda)
 
