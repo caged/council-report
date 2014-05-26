@@ -5,16 +5,18 @@ require 'open-uri'
 require 'json'
 require 'time'
 
+URL_HOST = 'http://www.portlandonline.com'
+
 def parse_bill(agenda_row, agenda_date)
   link = agenda_row.css('a')[0]
   link.remove
-  bill = { "link" => link['href'], 
+  bill = { "link" => URL_HOST+link['href'], 
            "number" => link.text.match(/\d+/)[0], 
            "date" => agenda_date, 
            "title" => agenda_row.text.gsub(/^[[:space:]]+/,'')}
 end
 
-url = 'http://www.portlandonline.com/auditor/index.cfm?c=26997'
+url = URL_HOST+'/auditor/index.cfm?c=26997'
 doc = Nokogiri::HTML(open(url).read)
 
 items = []
