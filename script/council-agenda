@@ -14,13 +14,13 @@ def parse_bill(agenda_row, agenda_date)
   title = agenda_row.text.gsub(/^[[:space:]]+/,'')
   time_certain_match = title.match(/^(TIME CERTAIN: (\d+:\d+ \w\w) )/)
   if time_certain_match
-    agenda_date = Time.parse("#{agenda_date.to_date} #{time_certain_match[2]}")
+    item_date = Time.parse("#{agenda_date.to_date} #{time_certain_match[2]}")
     title = title[time_certain_match[1].length+2, title.length]
-    bill.merge!({"time_certain" => true})
+    bill.merge!({"time_certain" => item_date})
   end
   bill.merge({ "link" => URL_HOST+link['href'], 
                "number" => link.text.match(/\d+/)[0], 
-               "date" => agenda_date, 
+               "session" => agenda_date, 
                "title" => title })
 end
 
