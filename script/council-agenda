@@ -1,0 +1,56 @@
+#!/usr/bin/env ruby
+require 'bundler/setup'
+require 'nokogiri'
+require 'open-uri'
+require 'json'
+require 'time'
+
+URL_HOST = 'http://www.portlandonline.com'
+
+def parse_bill(agenda_row, agenda_date)
+  bill = {}
+  link = agenda_row.css('a')[0]
+  link.remove
+  title = agenda_row.text.gsub(/^[[:space:]]+/,'')
+  time_certain_match = title.match(/^(TIME CERTAIN: (\d+:\d+ \w\w) )/)
+  if time_certain_match
+    item_date = Time.parse("#{agenda_date.to_date} #{time_certain_match[2]}")
+    title = title[time_certain_match[1].length+2, title.length]
+    bill.merge!({"time_certain" => item_date})
+  end
+  bill.merge({ "link" => URL_HOST+link['href'], 
+               "number" => link.text.match(/\d+/)[0], 
+               "session" => agenda_date, 
+               "title" => title })
+end
+
+url = URL_HOST+'/auditor/index.cfm?c=26997'
+doc = Nokogiri::HTML(open(url).read)
+
+items = []
+agenda_date = nil
+doc.css('div.wysiwyg font table tbody td').each do |row|
+  td_paras = row.css('p')
+  if td_paras[1]
+    date_match = row.css('p')[1].text.match(/\d+:\d+ \w\w, \w+ \d+, 20\d\d/)
+    if date_match
+      agenda_date = Time.parse(date_match[0])
+    end
+  end
+
+  if agenda_date
+    row.css('p').each do |ar|
+      if ar.css('a')[0]
+        bill = parse_bill(ar, agenda_date)
+        items << bill
+      end
+    end
+  end
+end
+
+agenda = {"source" => url,
+          "scrape_date" => Time.now,
+          "items" => items}
+
+puts JSON.pretty_generate(agenda)
+
