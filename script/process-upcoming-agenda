@@ -31,7 +31,7 @@ items = []
 target_column.css('.wysiwyg table tr a').each_with_index do |link, index|
   container = link.parent.parent
 
-  href = "#{base_url}/#{link.attr('href')}"
+  href = "#{base_url}#{link.attr('href')}"
   number = link.text.strip
   # The emergency status of the agenda item.  Emergency items take effect immediately
   # and aren't required to go through the normal 30 day waiting period.
