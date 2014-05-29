@@ -13,18 +13,20 @@ def parse_bill(agenda_row, agenda_date)
   link.remove
   title = agenda_row.text.gsub(/^[[:space:]]+/,'')
   time_certain_match = title.match(/^(TIME CERTAIN: (\d+:\d+ \w\w) )/)
+
   if time_certain_match
     item_date = Time.parse("#{agenda_date.to_date} #{time_certain_match[2]}")
-    title = title[time_certain_match[1].length+2, title.length]
+    title = title[time_certain_match[1].length + 2, title.length]
     bill.merge!(:time_certain => item_date)
   end
-  bill.merge(:link => URL_HOST+link['href'],
+
+  bill.merge(:link => URL_HOST + link['href'],
              :number => link.text.match(/\d+/)[0],
              :session => agenda_date,
              :title => title)
 end
 
-url = URL_HOST+'/auditor/index.cfm?c=26997'
+url = URL_HOST + '/auditor/index.cfm?c=26997'
 doc = Nokogiri::HTML(open(url).read)
 
 items = []
