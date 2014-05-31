@@ -32,17 +32,18 @@ doc = Nokogiri::HTML(open(url).read)
 items = []
 agenda_date = nil
 doc.css('div.wysiwyg font table tbody td').each do |row|
-  td_paras = row.css('p')
-  if td_paras[1]
-    date_match = row.css('p')[1].text.match(/\d+:\d+ \w\w, \w+ \d+, 20\d\d/)
+  row.css('p>strong').each do |head|
+    puts "checking p>strong #{head.text}"
+    date_match = head.text.match(/\d+:\d+ \w\w, \w+ [\d-]+, 20\d\d/)
     if date_match
-      agenda_date = Time.parse(date_match[0])
+      clean_date = date_match[0].gsub(/-\d+/, '')
+      agenda_date = Time.parse(clean_date)
     end
   end
 
   if agenda_date
     row.css('p').each do |ar|
-      if ar.css('a')[0]
+      if ar.css('strong>a')[0]
         bill = parse_bill(ar, agenda_date)
         items << bill
       end
