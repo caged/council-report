@@ -33,7 +33,6 @@ items = []
 agenda_date = nil
 doc.css('div.wysiwyg font table tbody td').each do |row|
   row.css('p>strong').each do |head|
-    puts "checking p>strong #{head.text}"
     date_match = head.text.match(/\d+:\d+ \w\w, \w+ [\d-]+, 20\d\d/)
     if date_match
       clean_date = date_match[0].gsub(/-\d+/, '')
